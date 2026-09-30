@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "falkner-skan"
+version = "1.0.0"
+description = "Compiled Python solver for the Falkner-Skan boundary-layer equation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+keywords = ["fluid-dynamics", "boundary-layer", "falkner-skan", "blasius", "cfd"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "numpy>=1.21",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+# Numba is what makes the solver fast; SciPy provides the fallback integrator
+# and is used by one of the tests.
+fast = ["numba>=0.56", "scipy>=1.8"]
+dev = ["numba>=0.56", "scipy>=1.8", "pytest>=7.0"]
+
+[project.scripts]
+falkner-skan = "falkner_skan.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/mrodrig6/basic_faulkner_skan"
+
+[tool.setuptools]
+packages = ["falkner_skan"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
