@@ -1,0 +1,9 @@
+# Core requirements.
+numpy>=1.21
+matplotlib>=3.5
+
+# Optional, but strongly recommended: numba compiles the integrator and the
+# shooting loop to machine code (~200x faster). Without it the solver falls
+# back to SciPy's compiled DOP853 integrator and returns identical answers.
+numba>=0.56
+scipy>=1.8

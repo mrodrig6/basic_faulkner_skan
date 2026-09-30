@@ -1,1 +1,23 @@
+# Local scratch work, carried over from the MATLAB version of this project.
 s_solution_code.m
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# Numba's on-disk compilation cache
+__pycache__/*.nbi
+__pycache__/*.nbc
+
+# LaTeX build products (geometry.pdf and geometry.png are checked in, since
+# the README embeds the PNG and not everyone has a TeX installation)
+docs/figures/*.aux
+docs/figures/*.log
+docs/figures/*.out
+docs/figures/*.synctex.gz
