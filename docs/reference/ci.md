@@ -1,17 +1,18 @@
 # Checks and CI
 
-Two GitHub Actions workflows run on pushes, pull requests, and manual requests. Both use Python 3.12 with a five-minute timeout per job; neither runs long simulations or deploys a website.
-
-| Workflow file | Actions entry | Checks |
-|---|---|---|
-| `.github/workflows/checks.yml` | [Lint, spelling and documentation](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml) | Ruff, codespell, strict MkDocs build |
-| `.github/workflows/simulation-tests.yml` | [Simulation tests and benchmarks](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/simulation-tests.yml) | Four pytest smoke tests and the short warmed benchmark |
+The **CI** workflow in `.github/workflows/ci.yml` runs one Python 3.12 job on every push, new or updated pull request, and manual request. Its five-minute job covers lint, spelling, documentation, four small simulation tests, and an informational benchmark; it does not deploy a website.
 
 ## Find and run the tests
 
-Open the simulation workflow above, select a run, and expand **Run four numerical smoke tests**. Pytest lists each test in `tests/test_ci_smoke.py` separately. The run uploads `numerical-smoke-test-results` as a JUnit XML artifact, including on test failure when the file exists. The benchmark writes timings to the run summary without a speed threshold.
+Open [Actions → CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/ci.yml). Run names include the event and branch. Expand **Test Blasius, mild wedge, continuation and 11-case sweep** to see the four pytest results from `tests/test_ci_smoke.py`.
 
-Once the workflow is on the default branch, choose **Run workflow** to start it manually. If GitHub reports Actions are disabled for the repository, enable them under **Settings → Actions → General**. A workflow file cannot override repository-level Actions settings.
+The run uploads `numerical-smoke-test-results` as a JUnit XML artifact, including on test failure when the file exists. The benchmark writes warmed timings to the run summary without a speed threshold.
+
+After this workflow is merged to the default branch, choose **Run workflow** to start it manually. Enabling Actions does not replay pushes or pull-request events that happened while it was disabled; push a new commit, open or reopen a PR, or start a manual run. This PR supplies a fresh push with the workflow present.
+
+If no run appears for a fresh event, inspect the repository’s **Settings → Actions → General** and any organization policy. Repository Actions settings must allow the workflow and its `actions/checkout`, `actions/setup-python`, and `actions/upload-artifact` dependencies. The workflow uses GitHub-hosted `ubuntu-latest` runners. Runner availability and account restrictions are separate from workflow syntax.
+
+The old `checks.yml` and `simulation-tests.yml` files have been replaced by this single workflow to avoid duplicate checks and stale badge links.
 
 ## Run locally
 
