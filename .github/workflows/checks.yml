@@ -1,4 +1,4 @@
-name: Lightweight CI
+name: Lint, spelling and documentation
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   checks:
-    name: Lint, spelling, docs, numerical tests and benchmark
+    name: Lint, spelling and strict docs build
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -29,13 +29,3 @@ jobs:
         run: codespell
       - name: Build documentation strictly
         run: python -m mkdocs build --strict
-      - name: Test Blasius reference wall shear
-        run: python tools/check_simulations.py --check blasius
-      - name: Test mild-wedge physical profile
-        run: python tools/check_simulations.py --check wedge
-      - name: Test continuation to n=0.2
-        run: python tools/check_simulations.py --check continuation
-      - name: Test 11-case wall-shear sweep
-        run: python tools/check_simulations.py --check sweep
-      - name: Benchmark single solve and small sweep (informational)
-        run: python tools/check_simulations.py --benchmark-only

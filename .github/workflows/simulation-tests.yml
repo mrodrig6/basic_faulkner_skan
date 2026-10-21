@@ -1,0 +1,36 @@
+name: Simulation tests and benchmarks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulations:
+    name: Four numerical smoke tests and short benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install simulation test dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Run four numerical smoke tests
+        run: python -m pytest -v tests/test_ci_smoke.py --junitxml=smoke-results.xml
+      - name: Benchmark single solve and 11-case sweep (informational)
+        run: python tools/check_simulations.py --benchmark-only
+      - name: Upload numerical test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: numerical-smoke-test-results
+          path: smoke-results.xml
+          if-no-files-found: ignore

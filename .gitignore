@@ -25,3 +25,4 @@ docs/figures/*.synctex.gz
 # Documentation and development tools
 site/
 .ruff_cache/
+smoke-results.xml
