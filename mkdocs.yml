@@ -1,0 +1,90 @@
+site_name: Falkner–Skan boundary-layer solver
+site_description: Solver usage, numerical method, theory, and validation
+repo_url: https://github.com/mrodrig6/basic_faulkner_skan
+repo_name: mrodrig6/basic_faulkner_skan
+use_directory_urls: false
+strict: true
+hooks:
+  - docs/hooks.py
+exclude_docs: |
+  hooks.py
+not_in_nav: |
+  theory.md
+  numerics.md
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    absolute_links: warn
+    unrecognized_links: warn
+    anchors: warn
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.instant
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+markdown_extensions:
+  - tables
+  - admonition
+  - attr_list
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.arithmatex:
+      generic: true
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - Quick start: getting-started/quick-start.md
+      - Examples: getting-started/examples.md
+  - Running:
+      - Command line: running/command-line.md
+      - Configuration: running/configuration.md
+      - Output: running/output.md
+      - Continuation and sweeps: running/continuation.md
+      - Figures: running/figures.md
+      - Troubleshooting: running/troubleshooting.md
+  - Python API:
+      - Package: api/package.md
+      - Custom plots: api/extending.md
+  - Model:
+      - Problem and assumptions: model/problem.md
+      - Parameters: model/parameters.md
+  - Method:
+      - Shooting and robustness: method/shooting.md
+      - Integration: method/integration.md
+      - Backends and performance: method/backends.md
+  - Theory:
+      - Derivation: theory/derivation.md
+      - Derived quantities: theory/derived-quantities.md
+  - Validation:
+      - Tests: validation/tests.md
+      - Classical solutions: validation/classical-solutions.md
+      - SciPy comparison: validation/scipy.md
+      - Reference values: validation/reference-values.md
+  - Reference:
+      - Compatibility: reference/compatibility.md
+      - Code map: reference/code-map.md
+      - Repository: reference/repository.md
+      - Checks and CI: reference/ci.md

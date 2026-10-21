@@ -21,3 +21,7 @@ docs/figures/*.aux
 docs/figures/*.log
 docs/figures/*.out
 docs/figures/*.synctex.gz
+
+# Documentation and development tools
+site/
+.ruff_cache/
