@@ -1,7 +1,6 @@
 # Falkner–Skan boundary-layer solver
 
-[![CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml/badge.svg)](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml)
-[![Simulation tests](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/simulation-tests.yml/badge.svg)](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/simulation-tests.yml)
+[![CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/ci.yml/badge.svg)](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 Compute the steady laminar boundary layer over a wedge, including the Blasius flat plate. This Python solver is intended for learning fluid mechanics and exploring how a pressure gradient changes a velocity profile.
