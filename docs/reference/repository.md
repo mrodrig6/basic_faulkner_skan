@@ -17,7 +17,7 @@ The repository contains a Python package, examples, numerical tests, and documen
 | `docs/theory.md`, `docs/numerics.md` | Short migration links for old file URLs |
 | `figures/` | Original tracked PNG/PDF gallery, retained for existing consumers |
 | `mkdocs.yml` | Material theme, navigation, strict link validation, math, homepage hook |
-| `.github/workflows/ci.yml` | One CI job for lint, spelling, documentation, four numerical smoke tests, and a short benchmark |
+| `.github/workflows/ci.yml` | Eight independent checks for lint, spelling, documentation, four numerical smoke tests, and a short benchmark |
 | `.gitignore` | Local caches, build output, and environment exclusions |
 
 The original MATLAB filenames remain in historical comments and `.gitignore`; MATLAB source is not present in this checkout. The Python package is the runnable implementation. See the [code map](code-map.md) for module details and [checks](ci.md) for development commands.

@@ -1,46 +1,257 @@
+# Shell-only jobs respect the repository-owned-actions policy.
 name: CI
 run-name: CI (${{ github.event_name }}) on ${{ github.ref_name }}
-
-on:
-  push:
+'on':
+  push: null
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-  workflow_dispatch:
-
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - ready_for_review
+  workflow_dispatch: null
 permissions:
   contents: read
-
 jobs:
-  checks:
-    name: Lint, spelling, docs, four simulation tests and benchmark
-    runs-on: ubuntu-latest
+  lint:
+    name: Python lint
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
-    env:
-      MPLBACKEND: Agg
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-      - name: Install development and documentation dependencies
-        run: python -m pip install -e '.[dev,docs]'
-      - name: Lint Python
-        run: python -m ruff check .
-      - name: Check spelling
-        run: codespell
-      - name: Build documentation strictly
-        run: python -m mkdocs build --strict
-      - name: Test Blasius, mild wedge, continuation and 11-case sweep
-        run: python -m pytest -v tests/test_ci_smoke.py --junitxml=smoke-results.xml
-      - name: Benchmark single solve and small sweep (no speed gate)
-        run: python tools/check_simulations.py --benchmark-only
-      - name: Upload smoke-test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: numerical-smoke-test-results
-          path: smoke-results.xml
-          if-no-files-found: ignore
+    - name: Check out the repository
+      env:
+        CI_GIT_TOKEN: ${{ github.token }}
+        CI_SERVER_URL: ${{ github.server_url }}
+        CI_REPOSITORY: ${{ github.repository }}
+        CI_COMMIT_SHA: ${{ github.sha }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        askpass="$(mktemp)"
+        trap 'rm -f "$askpass"' EXIT
+        cat > "$askpass" <<'SH'
+        #!/usr/bin/env bash
+        case "$1" in
+          *Username*) printf '%s\n' 'x-access-token' ;;
+          *Password*) printf '%s\n' "$CI_GIT_TOKEN" ;;
+          *) exit 1 ;;
+        esac
+        SH
+        chmod 700 "$askpass"
+        export GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0
+        git init "$GITHUB_WORKSPACE"
+        git -C "$GITHUB_WORKSPACE" remote add origin "$CI_SERVER_URL/$CI_REPOSITORY.git"
+        git -C "$GITHUB_WORKSPACE" -c credential.helper= fetch --no-tags --depth=1 origin "$CI_COMMIT_SHA"
+        git -C "$GITHUB_WORKSPACE" checkout --detach FETCH_HEAD
+    - name: Set up Python 3.12
+      shell: bash
+      run: |
+        python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
+        python3.12 -m venv .venv
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+    - name: Install dependencies
+      run: .venv/bin/python -m pip install 'ruff>=0.11,<1'
+    - name: Lint Python
+      run: python -m ruff check .
+  spelling:
+    name: Spelling
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Check out the repository
+      env:
+        CI_GIT_TOKEN: ${{ github.token }}
+        CI_SERVER_URL: ${{ github.server_url }}
+        CI_REPOSITORY: ${{ github.repository }}
+        CI_COMMIT_SHA: ${{ github.sha }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        askpass="$(mktemp)"
+        trap 'rm -f "$askpass"' EXIT
+        cat > "$askpass" <<'SH'
+        #!/usr/bin/env bash
+        case "$1" in
+          *Username*) printf '%s\n' 'x-access-token' ;;
+          *Password*) printf '%s\n' "$CI_GIT_TOKEN" ;;
+          *) exit 1 ;;
+        esac
+        SH
+        chmod 700 "$askpass"
+        export GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0
+        git init "$GITHUB_WORKSPACE"
+        git -C "$GITHUB_WORKSPACE" remote add origin "$CI_SERVER_URL/$CI_REPOSITORY.git"
+        git -C "$GITHUB_WORKSPACE" -c credential.helper= fetch --no-tags --depth=1 origin "$CI_COMMIT_SHA"
+        git -C "$GITHUB_WORKSPACE" checkout --detach FETCH_HEAD
+    - name: Set up Python 3.12
+      shell: bash
+      run: |
+        python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
+        python3.12 -m venv .venv
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+    - name: Install dependencies
+      run: .venv/bin/python -m pip install 'codespell>=2.4,<3'
+    - name: Check spelling
+      run: codespell
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Check out the repository
+      env:
+        CI_GIT_TOKEN: ${{ github.token }}
+        CI_SERVER_URL: ${{ github.server_url }}
+        CI_REPOSITORY: ${{ github.repository }}
+        CI_COMMIT_SHA: ${{ github.sha }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        askpass="$(mktemp)"
+        trap 'rm -f "$askpass"' EXIT
+        cat > "$askpass" <<'SH'
+        #!/usr/bin/env bash
+        case "$1" in
+          *Username*) printf '%s\n' 'x-access-token' ;;
+          *Password*) printf '%s\n' "$CI_GIT_TOKEN" ;;
+          *) exit 1 ;;
+        esac
+        SH
+        chmod 700 "$askpass"
+        export GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0
+        git init "$GITHUB_WORKSPACE"
+        git -C "$GITHUB_WORKSPACE" remote add origin "$CI_SERVER_URL/$CI_REPOSITORY.git"
+        git -C "$GITHUB_WORKSPACE" -c credential.helper= fetch --no-tags --depth=1 origin "$CI_COMMIT_SHA"
+        git -C "$GITHUB_WORKSPACE" checkout --detach FETCH_HEAD
+    - name: Set up Python 3.12
+      shell: bash
+      run: |
+        python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
+        python3.12 -m venv .venv
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+    - name: Install dependencies
+      run: .venv/bin/python -m pip install -e '.[docs]'
+    - name: Build documentation strictly
+      run: python -m mkdocs build --strict
+  simulations:
+    name: ${{ matrix.case.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Check out the repository
+      env:
+        CI_GIT_TOKEN: ${{ github.token }}
+        CI_SERVER_URL: ${{ github.server_url }}
+        CI_REPOSITORY: ${{ github.repository }}
+        CI_COMMIT_SHA: ${{ github.sha }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        askpass="$(mktemp)"
+        trap 'rm -f "$askpass"' EXIT
+        cat > "$askpass" <<'SH'
+        #!/usr/bin/env bash
+        case "$1" in
+          *Username*) printf '%s\n' 'x-access-token' ;;
+          *Password*) printf '%s\n' "$CI_GIT_TOKEN" ;;
+          *) exit 1 ;;
+        esac
+        SH
+        chmod 700 "$askpass"
+        export GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0
+        git init "$GITHUB_WORKSPACE"
+        git -C "$GITHUB_WORKSPACE" remote add origin "$CI_SERVER_URL/$CI_REPOSITORY.git"
+        git -C "$GITHUB_WORKSPACE" -c credential.helper= fetch --no-tags --depth=1 origin "$CI_COMMIT_SHA"
+        git -C "$GITHUB_WORKSPACE" checkout --detach FETCH_HEAD
+    - name: Set up Python 3.12
+      shell: bash
+      run: |
+        python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
+        python3.12 -m venv .venv
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+    - name: Install dependencies
+      run: .venv/bin/python -m pip install -e '.[dev]'
+    - name: Run numerical smoke test
+      env:
+        TEST_NODE: ${{ matrix.case.node }}
+      run: python -m pytest -v "tests/test_ci_smoke.py::$TEST_NODE" --junitxml=smoke-results.xml
+    - name: Summarize smoke-test results
+      if: always()
+      shell: bash
+      run: |
+        python3.12 - <<'PY'
+        import os
+        from pathlib import Path
+        import xml.etree.ElementTree as ET
+
+        report = Path("smoke-results.xml")
+        lines = ["## Numerical smoke tests", ""]
+        if report.exists():
+            root = ET.parse(report).getroot()
+            lines += ["| Test | Result |", "|---|---|"]
+            for case in root.iter("testcase"):
+                status = "PASS"
+                for tag in ("failure", "error", "skipped"):
+                    if case.find(tag) is not None:
+                        status = tag.upper()
+                        break
+                lines.append(f"| {case.attrib['name']} | {status} |")
+        else:
+            lines.append("No test report was produced. Inspect the earlier failed step.")
+        with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as stream:
+            stream.write("\n".join(lines) + "\n")
+        PY
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+        - name: Blasius reference
+          node: test_blasius_reference_shear
+        - name: Mild-wedge profile
+          node: test_mild_wedge_profile
+        - name: Continuation to n=0.2
+          node: test_continuation_to_point_two
+        - name: 11-case wall-shear sweep
+          node: test_eleven_case_sweep
+  benchmark:
+    name: Benchmark (informational)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Check out the repository
+      env:
+        CI_GIT_TOKEN: ${{ github.token }}
+        CI_SERVER_URL: ${{ github.server_url }}
+        CI_REPOSITORY: ${{ github.repository }}
+        CI_COMMIT_SHA: ${{ github.sha }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        askpass="$(mktemp)"
+        trap 'rm -f "$askpass"' EXIT
+        cat > "$askpass" <<'SH'
+        #!/usr/bin/env bash
+        case "$1" in
+          *Username*) printf '%s\n' 'x-access-token' ;;
+          *Password*) printf '%s\n' "$CI_GIT_TOKEN" ;;
+          *) exit 1 ;;
+        esac
+        SH
+        chmod 700 "$askpass"
+        export GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0
+        git init "$GITHUB_WORKSPACE"
+        git -C "$GITHUB_WORKSPACE" remote add origin "$CI_SERVER_URL/$CI_REPOSITORY.git"
+        git -C "$GITHUB_WORKSPACE" -c credential.helper= fetch --no-tags --depth=1 origin "$CI_COMMIT_SHA"
+        git -C "$GITHUB_WORKSPACE" checkout --detach FETCH_HEAD
+    - name: Set up Python 3.12
+      shell: bash
+      run: |
+        python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
+        python3.12 -m venv .venv
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+    - name: Install dependencies
+      run: .venv/bin/python -m pip install -e '.[fast]'
+    - name: Benchmark single solve and small sweep (no speed gate)
+      run: python tools/check_simulations.py --benchmark-only
+env:
+  MPLBACKEND: Agg

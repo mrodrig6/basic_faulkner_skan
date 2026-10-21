@@ -1,18 +1,20 @@
 # Checks and CI
 
-The **CI** workflow in `.github/workflows/ci.yml` runs one Python 3.12 job on every push, new or updated pull request, and manual request. Its five-minute job covers lint, spelling, documentation, four small simulation tests, and an informational benchmark; it does not deploy a website.
+The **CI** workflow in `.github/workflows/ci.yml` reports eight independent checks on every push, new or updated pull request, and manual request: lint, spelling, documentation, four numerical tests, and a benchmark. Each job uses Python 3.12 with a five-minute timeout; no job deploys a website.
 
 ## Find and run the tests
 
-Open [Actions → CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/ci.yml). Run names include the event and branch. Expand **Test Blasius, mild wedge, continuation and 11-case sweep** to see the four pytest results from `tests/test_ci_smoke.py`.
+Open [Actions → CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/ci.yml). Run names include the event and branch. Each result is a separate check: **Python lint**, **Spelling**, **Documentation**, **Blasius reference**, **Mild-wedge profile**, **Continuation to n=0.2**, **11-case wall-shear sweep**, and **Benchmark (informational)**. The four numerical checks select individual pytest tests from `tests/test_ci_smoke.py`.
 
-The run uploads `numerical-smoke-test-results` as a JUnit XML artifact, including on test failure when the file exists. The benchmark writes warmed timings to the run summary without a speed threshold.
+Each numerical job reads its JUnit XML and writes its test result to that job’s summary, including failures when the report exists. The benchmark writes warmed timings to its own summary without a speed threshold. No artifact-upload action is required.
 
 After this workflow is merged to the default branch, choose **Run workflow** to start it manually. Enabling Actions does not replay pushes or pull-request events that happened while it was disabled; push a new commit, open or reopen a PR, or start a manual run. This PR supplies a fresh push with the workflow present.
 
-If no run appears for a fresh event, inspect the repository’s **Settings → Actions → General** and any organization policy. Repository Actions settings must allow the workflow and its `actions/checkout`, `actions/setup-python`, and `actions/upload-artifact` dependencies. The workflow uses GitHub-hosted `ubuntu-latest` runners. Runner availability and account restrictions are separate from workflow syntax.
+The repository allows actions only from repositories owned by `mrodrig6`. This workflow therefore has no `uses:` entries. Shell steps fetch the event commit with Git, create a virtual environment with Python 3.12 already installed on the GitHub-hosted `ubuntu-24.04` runner, and publish results through `GITHUB_STEP_SUMMARY`. The checkout uses the read-only job token through a temporary Git askpass helper; it stores no token in the repository or Git configuration.
 
-The old `checks.yml` and `simulation-tests.yml` files have been replaced by this single workflow to avoid duplicate checks and stale badge links.
+No broader action allowlist is needed. GitHub-hosted runners must still be available to the repository; runner availability and account restrictions are separate from workflow syntax.
+
+The old `checks.yml` and `simulation-tests.yml` files have been replaced by this workflow to avoid duplicate checks and stale badge links. Jobs have no dependencies on one another. The numerical matrix disables fail-fast, so a failure does not cancel the other numerical checks. Lint and spelling install only their own tools; the other jobs install their relevant package extra.
 
 ## Run locally
 
@@ -30,7 +32,7 @@ python -m pip install -e ".[dev,docs]"
 | Numerical tests | `python -m pytest -v tests/test_ci_smoke.py --junitxml=smoke-results.xml` | Any failed numerical acceptance test |
 | Benchmark | `python tools/check_simulations.py --benchmark-only` | Execution error or non-finite timing; no speed threshold |
 
-The original `python tools/check_simulations.py` command still runs its standalone checks and benchmark locally. CI uses explicit pytest tests so the results are visible by test name and available as a result artifact.
+The original `python tools/check_simulations.py` command still runs its standalone checks and benchmark locally. CI uses explicit pytest tests so the results are visible by test name in the log and job summary.
 
 The lint scope avoids a broad style rewrite. Spelling excludes generated files, dependency caches, and the verbatim license. No spelling exceptions are currently needed.
 
