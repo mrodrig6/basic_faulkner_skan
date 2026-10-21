@@ -1,6 +1,6 @@
 # Tests
 
-The existing `tests/test_solver.py` checks numerical behaviour against reference solutions and SciPy. The separate CI smoke script covers only the approved small cases.
+The existing `tests/test_solver.py` checks numerical behaviour against reference solutions and SciPy. The separate `tests/test_ci_smoke.py` file covers only the four approved small cases in the simulation CI workflow.
 
 ## Full local suite
 
@@ -8,7 +8,7 @@ The existing `tests/test_solver.py` checks numerical behaviour against reference
 python -m pytest -q
 ```
 
-The suite currently executes 23 test cases and checks these claims:
+The suite currently executes 27 test cases (23 original cases plus four CI smoke cases) and checks these claims:
 
 - Blasius wall shear agrees with a textbook reference within `1e-7`.
 - Blasius thickness integrals and shape factor agree within the stated tolerances.
@@ -23,12 +23,12 @@ The suite currently executes 23 test cases and checks these claims:
 - Custom output grids work and invalid grids raise errors.
 - Failed shooting raises, or returns a negative flag with `strict=False`.
 
-The SciPy comparison uses `pytest.importorskip`; install `.[dev]` to avoid skipping it. The suite is a local validation command, not part of the lightweight CI workflow. It does not establish accuracy for every possible input or validate an absent-Numba installation.
+The SciPy comparison uses `pytest.importorskip`; install `.[dev]` to avoid skipping it. The full suite remains a local validation command; CI selects only `tests/test_ci_smoke.py`. It does not establish accuracy for every possible input or validate an absent-Numba installation.
 
 ## Small CI checks
 
 ```bash
-python tools/check_simulations.py
+python -m pytest -v tests/test_ci_smoke.py
 ```
 
 This runs one Blasius reference solve, one mild-wedge profile check, continuation to `n=0.2`, and an 11-case sweep. See [CI](../reference/ci.md) for exact acceptance criteria and [classical solutions](classical-solutions.md) for external reference values.

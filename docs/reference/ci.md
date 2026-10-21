@@ -1,14 +1,17 @@
 # Checks and CI
 
-`.github/workflows/checks.yml` defines the **Lightweight CI** workflow: one Python 3.12 job on pushes, pull requests, and manual runs, with a five-minute timeout. The README’s single CI badge covers all steps; there is no deployment, formatting workflow, version matrix, or long simulation job.
+Two GitHub Actions workflows run on pushes, pull requests, and manual requests. Both use Python 3.12 with a five-minute timeout per job; neither runs long simulations or deploys a website.
 
-## Find and run the workflow
+| Workflow file | Actions entry | Checks |
+|---|---|---|
+| `.github/workflows/checks.yml` | [Lint, spelling and documentation](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml) | Ruff, codespell, strict MkDocs build |
+| `.github/workflows/simulation-tests.yml` | [Simulation tests and benchmarks](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/simulation-tests.yml) | Four pytest smoke tests and the short warmed benchmark |
 
-Open [Actions → Lightweight CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml). Expand a run to see separate steps for Blasius, the mild wedge, continuation, the 11-case sweep, and the informational benchmark, alongside lint, spelling, and the docs build.
+## Find and run the tests
 
-After this workflow version is on the default branch, choose **Run workflow** to start it manually. Each successful numerical step appends its result to the run summary; the benchmark adds timings separately. A failed numerical assertion fails its step and the job.
+Open the simulation workflow above, select a run, and expand **Run four numerical smoke tests**. Pytest lists each test in `tests/test_ci_smoke.py` separately. The run uploads `numerical-smoke-test-results` as a JUnit XML artifact, including on test failure when the file exists. The benchmark writes timings to the run summary without a speed threshold.
 
-If GitHub reports Actions are disabled for the repository, enable them under **Settings → Actions → General**. Adding a workflow file cannot override repository-level Actions settings.
+Once the workflow is on the default branch, choose **Run workflow** to start it manually. If GitHub reports Actions are disabled for the repository, enable them under **Settings → Actions → General**. A workflow file cannot override repository-level Actions settings.
 
 ## Run locally
 
@@ -21,17 +24,14 @@ python -m pip install -e ".[dev,docs]"
 | Step | Local command | Fails on |
 |---|---|---|
 | Lint | `python -m ruff check .` | Syntax errors, undefined names, unused imports/locals, and selected fatal errors |
-| Spelling | `codespell` | Unknown misspellings in README, docs, Python sources, and examples |
-| Documentation | `python -m mkdocs build --strict` | Broken internal links, missing navigation targets, invalid docs configuration |
-| Blasius | `python tools/check_simulations.py --check blasius` | Incorrect reference wall shear |
-| Mild wedge | `python tools/check_simulations.py --check wedge` | Invalid boundary conditions or unphysical profile |
-| Continuation | `python tools/check_simulations.py --check continuation` | Unconverged or unphysical target profile |
-| Small sweep | `python tools/check_simulations.py --check sweep` | Failed cases or non-increasing wall shear |
-| Informational benchmark | `python tools/check_simulations.py --benchmark-only` | Execution error or non-finite timing; no speed threshold |
+| Spelling | `codespell` | Misspellings in documentation, Python sources, and examples |
+| Documentation | `python -m mkdocs build --strict` | Broken internal links, missing navigation targets, invalid configuration |
+| Numerical tests | `python -m pytest -v tests/test_ci_smoke.py --junitxml=smoke-results.xml` | Any failed numerical acceptance test |
+| Benchmark | `python tools/check_simulations.py --benchmark-only` | Execution error or non-finite timing; no speed threshold |
 
-Run `python tools/check_simulations.py` without flags to execute all four numerical checks and the benchmark together.
+The original `python tools/check_simulations.py` command still runs its standalone checks and benchmark locally. CI uses explicit pytest tests so the results are visible by test name and available as a result artifact.
 
-The lint scope intentionally avoids a broad style rewrite. The spelling check covers documentation, source comments, and examples; generated files, dependency caches, and the verbatim license are excluded. No custom spelling exceptions are currently needed.
+The lint scope avoids a broad style rewrite. Spelling excludes generated files, dependency caches, and the verbatim license. No spelling exceptions are currently needed.
 
 ## Numerical acceptance criteria
 
