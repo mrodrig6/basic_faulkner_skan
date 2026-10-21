@@ -1,169 +1,69 @@
-# Falkner–Skan Boundary-Layer Solver
+# Falkner–Skan boundary-layer solver
 
-A fast, compiled Python solver for the **Falkner–Skan equation**, which
-describes the laminar boundary layer over a wedge. The classical **Blasius
-flat plate** is the special case $n = 0$. Educational code, suitable for an
-introductory course in fluid mechanics or boundary layers.
+[![CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml/badge.svg)](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-![Falkner–Skan problem geometry](docs/figures/geometry.png)
+Compute the steady laminar boundary layer over a wedge, including the Blasius flat plate. This Python solver is intended for learning fluid mechanics and exploring how a pressure gradient changes a velocity profile.
 
-A uniform stream of speed $v_\infty$ meets a symmetric wedge of included angle
-$\beta\pi$. Along the wedge face a laminar boundary layer of thickness
-$\delta(x_1)$ grows, driven by the external velocity
-$v_{1e}(x_1) = C\,x_1^{\,n}$. Because that edge velocity is a power law, the
-velocity profiles at every station collapse onto a single curve when plotted
-against the similarity coordinate $\eta$ — which is what reduces a partial
-differential equation to an ordinary one.
+![Uniform flow approaching a wedge, with wall-aligned coordinates and a growing boundary layer](docs/figures/geometry.png)
 
-*(The figure is drawn with TikZ; the source is
-[`docs/figures/geometry.tex`](docs/figures/geometry.tex) and is also listed in
-[the theory notes](docs/theory.md#8-problem-geometry-tikz-source).)*
+- Velocity and stream-function profiles from a shooting solver.
+- Dimensionless wall shear, displacement thickness, momentum thickness, and shape factor.
+- Continuation and parameter sweeps across wedge angles.
+- CSV exports and publication-style plots, with optional Numba acceleration.
 
-## The equation
-
-Starting from the incompressible Navier–Stokes equations and applying the
-boundary-layer approximation and a similarity transformation — the full
-derivation is in [`docs/theory.md`](docs/theory.md) — the problem reduces to a
-single third-order nonlinear ODE:
-
-$$
-f''' + \frac{n+1}{2}\, f f'' - n f'^2 + n = 0,
-\qquad
-f(0) = f'(0) = 0,
-\qquad
-f'(\infty) = 1,
-$$
-
-where $f'(\eta) = v_1 / v_{1e}$ is the dimensionless velocity and $n$ is the
-pressure-gradient parameter, related to the wedge angle by
-
-$$
-n = \frac{\beta}{2 - \beta},
-\qquad
-\beta = \frac{2n}{n+1} .
-$$
-
-$n > 0$ is a favourable (accelerating) pressure gradient, $n = 0$ the flat
-plate, and $n < 0$ an adverse one; the boundary layer separates at
-$n \approx -0.0904$.
-
-**Reference:** Kundu, P. K. and Cohen, I. M., *Fluid Mechanics*, 4th edition.
+Use the returned arrays and Matplotlib axes to [make custom plots](docs/api/extending.md).
 
 ## Install
 
-```bash
-git clone https://github.com/mrodrig6/basic_faulkner_skan.git
-cd basic_faulkner_skan
-pip install -e .
-```
-
-The only hard requirements are NumPy and Matplotlib. Numba is optional but
-strongly recommended — it is what makes the solver fast. Without it the
-package falls back to SciPy's compiled integrator and still gives identical
-answers, just more slowly.
+Python 3.9 or newer is required. From a checkout of this repository:
 
 ```bash
-pip install -e ".[fast]"   # numba + scipy
-pip install -e ".[dev]"    # + pytest
+python -m pip install -e ".[fast]"  # use .[dev,docs] for development and documentation
 ```
+
+See [installation](docs/getting-started/installation.md) for requirements, extras, and verification.
 
 ## Quick start
 
-```python
-from falkner_skan import solve
-
-blasius = solve(0.0)                 # flat plate
-print(blasius.wall_shear)            # 0.33205919  (f''(0))
-print(blasius.shape_factor)          # 2.59115     (H = delta*/theta)
-
-wedge = solve(0.05, fpp0=blasius.wall_shear)   # mild favourable gradient
-print(wedge.eta, wedge.fp)                     # eta and v_1/v_1e
-```
-
-From the command line:
+Run these commands from the repository root after installation:
 
 ```bash
-python -m falkner_skan -n 0 0.05            # the two cases of the old example
-python -m falkner_skan -n 0.2 --csv out/    # write the profile as CSV
-python -m falkner_skan --figures            # regenerate figures/
+# Inspect the command-line options.
+python -m falkner_skan --help
+# Solve the flat plate and a mild favourable pressure gradient.
+python -m falkner_skan -n 0 0.05
+# Export one velocity profile to CSV.
+python -m falkner_skan -n 0.2 --csv /tmp/falkner-skan/csv
+# Generate the built-in plots in a separate output directory.
+python -m falkner_skan.figures -o /tmp/falkner-skan/figures
 ```
-
-Jumping to an `n` far from your starting guess can converge on a non-physical
-root, so for anything but a small step use continuation:
 
 ```python
-from falkner_skan import solve_continuation, sweep
-import numpy as np
+from falkner_skan import solve_continuation
 
-stagnation = solve_continuation(1.0)         # walks n across in small steps
-shear, residual, iters = sweep(np.linspace(0.0, 2.0, 401))
+solution = solve_continuation(0.2)
+print(f"wall shear: {solution.wall_shear:.6f}")
+# wall shear: 0.621324
 ```
 
-See [`docs/numerics.md`](docs/numerics.md) for why, and for how to choose
-`eta_max`.
+Follow the [complete quick start](docs/getting-started/quick-start.md) to interpret the output.
 
-## Figures
+## Documentation
 
-`python -m falkner_skan.figures` regenerates everything in `figures/`.
-Add `--geometry` to recompile the TikZ sketch as well (needs `pdflatex` and
-`pdftocairo`).
-
-| | |
+| Section | Pages |
 |---|---|
-| ![velocity and integral-thickness profiles](figures/velocity_profiles.png) | ![velocity profiles across wedge angles](figures/profile_family.png) |
-| **`velocity_profiles.png`** — the figure the original MATLAB example drew: velocity $f'$, the displacement-thickness integrand $1 - f'$, and the momentum-thickness integrand $f'(1 - f')$, for $n = 0$ and $n = 0.05$. | **`profile_family.png`** — how the profile fills out under a favourable gradient and thins towards separation under an adverse one. |
+| Getting started | [Installation](docs/getting-started/installation.md) · [Quick start](docs/getting-started/quick-start.md) · [Examples](docs/getting-started/examples.md) |
+| Running | [Command line](docs/running/command-line.md) · [Configuration](docs/running/configuration.md) · [Output](docs/running/output.md) · [Continuation and sweeps](docs/running/continuation.md) · [Figures](docs/running/figures.md) · [Troubleshooting](docs/running/troubleshooting.md) |
+| Python API | [Package](docs/api/package.md) · [Custom plots](docs/api/extending.md) |
+| Model | [Problem and assumptions](docs/model/problem.md) · [Parameters](docs/model/parameters.md) |
+| Method | [Shooting and robustness](docs/method/shooting.md) · [Integration](docs/method/integration.md) · [Backends and performance](docs/method/backends.md) |
+| Theory | [Derivation](docs/theory/derivation.md) · [Derived quantities](docs/theory/derived-quantities.md) |
+| Validation | [Tests](docs/validation/tests.md) · [Classical solutions](docs/validation/classical-solutions.md) · [SciPy comparison](docs/validation/scipy.md) · [Reference values](docs/validation/reference-values.md) |
+| Reference | [Compatibility](docs/reference/compatibility.md) · [Code map](docs/reference/code-map.md) · [Repository](docs/reference/repository.md) · [Checks and CI](docs/reference/ci.md) |
 
-![wall shear stress against pressure-gradient parameter](figures/wall_shear.png)
-
-**`wall_shear.png`** — $f''(0)$ against $n$ over 600-odd wedge angles, falling
-to zero at separation. The whole sweep takes a few milliseconds.
-
-## How the solver works
-
-The boundary-value problem is turned into an initial-value problem by guessing
-the wall shear stress $f''(0)$. The solver then
-
-1. integrates the ODE from $\eta = 0$ to $\eta_{\max}$ with an adaptive
-   Dormand–Prince 5(4) Runge–Kutta pair,
-2. checks the outer condition $f'(\eta_{\max}) = 1$,
-3. updates the guess with a secant step, and repeats until the residual is
-   below $10^{-8}$.
-
-Both the integrator and the secant loop are compiled to machine code with
-Numba, which makes a single solve about 200x faster than the equivalent
-interpreted Python, and a parameter sweep about 140x faster
-(`python examples/benchmark.py`). Full detail — including the divergence
-guards and backtracking that the original MATLAB version lacked — is in
-[`docs/numerics.md`](docs/numerics.md).
-
-## Repository layout
-
-| Path | Description |
-|---|---|
-| `falkner_skan/_kernels.py` | Compiled core: ODE right-hand side, Dormand–Prince integrator with dense output, secant shooting loop, parameter sweep. |
-| `falkner_skan/solver.py` | Public API — `solve`, `solve_continuation`, `sweep`, `FalknerSkanSolution`. |
-| `falkner_skan/plotting.py` | The figures, styled to match the original MATLAB output. |
-| `falkner_skan/figures.py` | `python -m falkner_skan.figures` — regenerates every figure, TikZ included. |
-| `falkner_skan/cli.py` | `python -m falkner_skan` — solve, print, write CSV or figures. |
-| `examples/example_profiles.py` | Port of the original `s_example_code.m`. |
-| `examples/benchmark.py` | Compiled vs. pure-Python timings. |
-| `docs/theory.md` | Navier–Stokes to Falkner–Skan, in full. |
-| `docs/numerics.md` | Shooting, the compiled kernels, and how to choose the parameters. |
-| `docs/figures/geometry.tex` | TikZ source for the geometry sketch. |
-| `tests/` | `pytest` suite, checked against textbook values. |
-
-## Tests
-
-```bash
-pytest
-```
-
-The suite pins the solver against published values — Blasius
-$f''(0) = 0.332057$, $\delta^* = 1.72079$, $\theta = 0.66411$; Hiemenz
-$f''(0) = 1.232588$ — checks the dense-output interpolant against SciPy, and
-verifies that the profiles it returns are physical.
+This is a Python port of an educational MATLAB shooting solver. The background follows Kundu and Cohen, *Fluid Mechanics*, 4th edition; no project paper or DOI is specified.
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 — see the
-[LICENSE](LICENSE) file for details.
+[GNU General Public License v3.0](LICENSE).
