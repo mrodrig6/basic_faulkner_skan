@@ -7,7 +7,7 @@ Numba uses `cache=True`, so later processes can reuse cached machine code. Compi
 ## Lightweight CI benchmark
 
 ```bash
-python tools/check_simulations.py
+python tools/check_simulations.py --benchmark-only
 ```
 
 The script warms both the single-solve and sweep paths, then records three repetitions of each. It reports the minimum time and the backend, Python, NumPy, and Numba versions. CI appends the report to its job summary. It never compares against a speed threshold: shared-runner timing is too variable for a reliable gate.

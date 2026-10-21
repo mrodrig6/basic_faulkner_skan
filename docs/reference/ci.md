@@ -1,6 +1,16 @@
 # Checks and CI
 
-`.github/workflows/checks.yml` runs one Python 3.12 job on pushes and pull requests, with a five-minute timeout. The README’s single CI badge covers all steps; there is no deployment, formatting workflow, version matrix, or long simulation job.
+`.github/workflows/checks.yml` defines the **Lightweight CI** workflow: one Python 3.12 job on pushes, pull requests, and manual runs, with a five-minute timeout. The README’s single CI badge covers all steps; there is no deployment, formatting workflow, version matrix, or long simulation job.
+
+## Find and run the workflow
+
+Open [Actions → Lightweight CI](https://github.com/mrodrig6/basic_faulkner_skan/actions/workflows/checks.yml). Expand a run to see separate steps for Blasius, the mild wedge, continuation, the 11-case sweep, and the informational benchmark, alongside lint, spelling, and the docs build.
+
+After this workflow version is on the default branch, choose **Run workflow** to start it manually. Each successful numerical step appends its result to the run summary; the benchmark adds timings separately. A failed numerical assertion fails its step and the job.
+
+If GitHub reports Actions are disabled for the repository, enable them under **Settings → Actions → General**. Adding a workflow file cannot override repository-level Actions settings.
+
+## Run locally
 
 Install tools once:
 
@@ -13,7 +23,13 @@ python -m pip install -e ".[dev,docs]"
 | Lint | `python -m ruff check .` | Syntax errors, undefined names, unused imports/locals, and selected fatal errors |
 | Spelling | `codespell` | Unknown misspellings in README, docs, Python sources, and examples |
 | Documentation | `python -m mkdocs build --strict` | Broken internal links, missing navigation targets, invalid docs configuration |
-| Numerical smoke checks | `python tools/check_simulations.py` | Any failed numerical assertion or non-finite timing |
+| Blasius | `python tools/check_simulations.py --check blasius` | Incorrect reference wall shear |
+| Mild wedge | `python tools/check_simulations.py --check wedge` | Invalid boundary conditions or unphysical profile |
+| Continuation | `python tools/check_simulations.py --check continuation` | Unconverged or unphysical target profile |
+| Small sweep | `python tools/check_simulations.py --check sweep` | Failed cases or non-increasing wall shear |
+| Informational benchmark | `python tools/check_simulations.py --benchmark-only` | Execution error or non-finite timing; no speed threshold |
+
+Run `python tools/check_simulations.py` without flags to execute all four numerical checks and the benchmark together.
 
 The lint scope intentionally avoids a broad style rewrite. The spelling check covers documentation, source comments, and examples; generated files, dependency caches, and the verbatim license are excluded. No custom spelling exceptions are currently needed.
 

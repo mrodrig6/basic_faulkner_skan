@@ -11,7 +11,7 @@ The installed `falkner-skan` command and `python -m falkner_skan` both call `fal
 | `python -m falkner_skan.figures` | Generate solver figures; optionally rebuild the geometry |
 | `python examples/example_profiles.py` | Solve and plot the original two cases |
 | `python examples/benchmark.py` | Optional compiled-versus-SciPy timing comparison; excluded from CI |
-| `python tools/check_simulations.py` | Four small numerical checks and a three-repeat benchmark |
+| `python tools/check_simulations.py` | Four small numerical checks and a three-repeat benchmark; select one with `--check` or use `--benchmark-only` |
 
 ## Solver flags
 
